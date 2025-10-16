@@ -36,10 +36,7 @@ class MyPlanner:
         # represented by integer 0.
 
         # Getting starting positions
-        s = self._env.get_config().start_positions
-        start_positions = self._env.get_config().start_positions
-        s = np.zeros_like(current_state)
-        s[:, :3] = np.array(start_positions)
+        s = current_state
 
         discount_factor = self._env.get_config().discount_factor
         num_actions = self._env.num_actions
