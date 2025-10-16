@@ -14,9 +14,9 @@ class MyPlanner:
     
     def _get_greedy_action(self, state: np.ndarray, num_actions: int, discount_factor: float):
         # Finding action a that maximises Q(s, a)
-        a_greedy, Q_max, next_s_greedy = None, None, None
+        a_greedy, Q_max, next_s_greedy, greedy_signal = None, None, None, None
         for a in range(num_actions):
-            next_s, reward, _, _ = self._env.simulate(state, a)
+            next_s, reward, terminal_signal, _ = self._env.simulate(state, a)
 
             # Initialising the value of the next state to 0 if it doesn't already have a value
             if tuple(next_s.flatten()) not in self._V.keys():
@@ -28,7 +28,8 @@ class MyPlanner:
                 Q_max = cur_Q
                 a_greedy = a
                 next_s_greedy = next_s
-        return a_greedy, Q_max, next_s_greedy
+                greedy_signal = terminal_signal
+        return a_greedy, Q_max, next_s_greedy, greedy_signal
 
     def plan(self, current_state: np.ndarray, planning_time_per_step: float) -> int:
         # This doesn't do anything useful. It simply returns the action 
@@ -42,14 +43,18 @@ class MyPlanner:
 
         discount_factor = self._env.get_config().discount_factor
         num_actions = self._env.num_actions
-        # start_time = time.time()
-        while(np.any(s[:, :3] != self._env.get_config().goal_positions)):
+        start_time = time.time()
+        while(time.time() - start_time <= planning_time_per_step):
             # Finding action a that maximises Q(s, a)
-            a_greedy, Q_max, next_s_greedy = self._get_greedy_action(s, num_actions, discount_factor)
+            a_greedy, Q_max, next_s_greedy, greedy_signal = self._get_greedy_action(s, num_actions, discount_factor)
             # Updating the value and policy
             self._V[tuple(s.flatten())] = Q_max
             s = next_s_greedy
+
+            # Encountered a termina signal in best greedy action
+            if greedy_signal:
+                break
         
         # Computing action for current state
-        a_greedy, Q_max, _ = self._get_greedy_action(current_state, num_actions, discount_factor)
+        a_greedy, _, _, _ = self._get_greedy_action(current_state, num_actions, discount_factor)
         return a_greedy
