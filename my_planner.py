@@ -11,9 +11,6 @@ class MyPlanner:
         # Initialising the values for each state
         # {All states have value 0 initially}
         self._V = {}
-
-        # Initialising the policy
-        self._policy = {}
     
     def _get_greedy_action(self, state: np.ndarray, num_actions: int, discount_factor: float):
         # Finding action a that maximises Q(s, a)
@@ -36,7 +33,13 @@ class MyPlanner:
     def plan(self, current_state: np.ndarray, planning_time_per_step: float) -> int:
         # This doesn't do anything useful. It simply returns the action 
         # represented by integer 0.
-        s = current_state
+
+        # Getting starting positions
+        s = self._env.get_config().start_positions
+        start_positions = self._env.get_config().start_positions
+        s = np.zeros_like(current_state)
+        s[:, :3] = np.array(start_positions)
+
         discount_factor = self._env.get_config().discount_factor
         num_actions = self._env.num_actions
         # start_time = time.time()
@@ -45,7 +48,6 @@ class MyPlanner:
             a_greedy, Q_max, next_s_greedy = self._get_greedy_action(s, num_actions, discount_factor)
             # Updating the value and policy
             self._V[tuple(s.flatten())] = Q_max
-            self._policy[tuple(s.flatten())] = a_greedy
             s = next_s_greedy
         
         # Computing action for current state
