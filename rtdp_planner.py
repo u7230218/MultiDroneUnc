@@ -46,7 +46,6 @@ class RTDPPlanner:
         s = current_state
 
         discount_factor = self._env.get_config().discount_factor
-        num_actions = self._env.num_actions
         start_time = time.time()
         while(time.time() - start_time <= planning_time_per_step):
             # Finding action a that maximises Q(s, a)
