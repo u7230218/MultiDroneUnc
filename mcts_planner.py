@@ -10,24 +10,23 @@ class Node:
         self.children = {} # a -> [N(s,a), s']
         self.visits = 0
         self.value = 0.0
-        self.remaining_actions = list(range(env.num_actions))
     
     def __str__(self):
-        node_string = f"Node:(state='{self.state}', Value={self.value}), Visits={self.visits}, Remaining_actions={self.remaining_actions}, Children=["
+        node_string = f"Node:(state='{self.state}', Value={self.value}), Visits={self.visits}, previously_preformed_actions={self.children.keys()}, Children=["
         for a in self.children.keys():
-            node_string += f"(action={a}, (n_s_a={self.children[a][0]}, {self.children[a][1]}))"
+            # node_string += f"(action={a}, (n_s_a={self.children[a][0]}, {self.children[a][1]}))"
+            # node_string += f"(action={a}, (n_s_a={self.children[a][0]}))"
+            node_string += f"\n(action={a}, (n_s_a={self.children[a][0]}, {self.children[a][1].value}))"
         node_string = node_string[:-2] + "]"
         return node_string
 
 class MCTSPlanner:
-    def __init__(self, env: MultiDroneUnc, c: float = 1.0, rollout_lookahead = 10):
+    def __init__(self, env: MultiDroneUnc, c: float = 1, rollout_lookahead = 10):
         self._env = env
         self.c = c
         self.rollout_lookahead = rollout_lookahead
 
     def plan(self, current_state: np.ndarray, planning_time_per_step: float) -> int:
-        # This doesn't do anything useful. It simply returns the action 
-        # representen by integer 0.
         root = Node(self._env, current_state)
         discount_factor = self._env.get_config().discount_factor
         num_actions = self._env.num_actions
@@ -45,11 +44,9 @@ class MCTSPlanner:
                 cur_node_previous_actions = cur_node.children.keys()
                 for a in range(num_actions):
                     n_s_a = 0
-                    child_value = 0
                     if a in cur_node_previous_actions:
                         n_s_a = cur_node.children[a][0]
-                        child_value = cur_node.children[a][1].value
-                    ucb = child_value + self.c * math.sqrt(math.log(cur_node.visits + 1) / (n_s_a + 1))
+                    ucb = cur_node.value + self.c * math.sqrt(math.log(cur_node.visits + 1) / (n_s_a + 1))
                     if max_ucb == None or ucb > max_ucb:
                         max_ucb = ucb
                         selected_a = a
@@ -74,8 +71,8 @@ class MCTSPlanner:
             for _ in range(self.rollout_lookahead):
                 a_greedy, next_s_greedy, greedy_signal = None, None, None
                 a_greedy = np.random.randint(self._env.num_actions)
-                next_s_greedy, reward, greedy_signal, _ = self._env.simulate(cur_state, a_greedy)
-                estimated_total_reward += reward + cur_discount * estimated_total_reward
+                next_s_greedy, simulated_reward, greedy_signal, _ = self._env.simulate(cur_state, a_greedy)
+                estimated_total_reward += simulated_reward * cur_discount
 
                 if greedy_signal:
                     break
@@ -83,16 +80,20 @@ class MCTSPlanner:
                 cur_state = next_s_greedy
             
             # Backpropagation
+            cur_a = None
             while cur_node is not None:
-                cur_node.value += estimated_total_reward
+                n_s_a = 0
+                if cur_a is not None:
+                    n_s_a = cur_node.children[cur_a][0]
+                cur_node.value = (estimated_total_reward + (cur_node.value * n_s_a)) / (1 + n_s_a)
                 cur_node.visits += 1
                 if len(action_history) > 0:
-                    action = action_history.pop()
-                    cur_node.parent.children[action][0] += 1
+                    prev_a = action_history.pop()
+                    cur_node.parent.children[prev_a][0] += 1
+                    cur_a = prev_a
                 cur_node = cur_node.parent
-            # print("\n")
-            # print(root)
-            # print("\n")
+        # print("\n")
+        # print(root)
         
         # Picking best action to perform
         best_a = None
@@ -102,4 +103,7 @@ class MCTSPlanner:
             if best_value == None or child.value > best_value:
                 best_a = a
                 best_value = child.value
+        # print("Best a = ", best_a)
+        # print("\n")
+        
         return best_a
