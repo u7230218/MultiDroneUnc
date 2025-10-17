@@ -3,10 +3,8 @@ from multi_drone import MultiDroneUnc
 import time
 
 class RTDPPlanner:
-    def __init__(self, env: MultiDroneUnc, a_param: float = 1.0, b_param: int = 1.0):
+    def __init__(self, env: MultiDroneUnc):
         self._env = env
-        self._a_param = a_param
-        self._b_param = b_param
 
         # Initialising the values for each state
         # {All states have value 0 initially}

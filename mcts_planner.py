@@ -44,10 +44,18 @@ class MCTSPlanner:
                 cur_node_previous_actions = cur_node.children.keys()
                 for a in range(num_actions):
                     n_s_a = 0
+                    q_s_a = 0.0
                     if a in cur_node_previous_actions:
                         n_s_a = cur_node.children[a][0]
-                    ucb = cur_node.value + self.c * math.sqrt(math.log(cur_node.visits + 1) / (n_s_a + 1))
-                    if max_ucb == None or ucb > max_ucb:
+                        child_visits = cur_node.children[a][1].visits
+                        if child_visits > 0:
+                            q_s_a = cur_node.children[a][1].value
+                        else:
+                            q_s_a = 0.0
+                    ucb = -float('inf')
+                    if cur_node.visits > 0 :
+                        ucb = q_s_a + self.c * math.sqrt(math.log(cur_node.visits) / (n_s_a + 1))
+                    if max_ucb is None or ucb > max_ucb:
                         max_ucb = ucb
                         selected_a = a
                 action_history.append(selected_a)
