@@ -11,17 +11,17 @@ class Node:
         self.visits = 0
         self.value = 0.0
     
-    def __str__(self):
-        node_string = f"Node:(state='{self.state}', Value={self.value}), Visits={self.visits}, previously_preformed_actions={self.children.keys()}, Children=["
-        for a in self.children.keys():
-            # node_string += f"(action={a}, (n_s_a={self.children[a][0]}, {self.children[a][1]}))"
-            # node_string += f"(action={a}, (n_s_a={self.children[a][0]}))"
-            node_string += f"\n(action={a}, (n_s_a={self.children[a][0]}, {self.children[a][1].value}))"
-        node_string = node_string[:-2] + "]"
-        return node_string
+    # def __str__(self):
+    #     node_string = f"Node:(state='{self.state}', Value={self.value}), Visits={self.visits}, previously_preformed_actions={self.children.keys()}, Children=["
+    #     for a in self.children.keys():
+    #         # node_string += f"(action={a}, (n_s_a={self.children[a][0]}, {self.children[a][1]}))"
+    #         # node_string += f"(action={a}, (n_s_a={self.children[a][0]}))"
+    #         node_string += f"\n(action={a}, (n_s_a={self.children[a][0]}, {self.children[a][1].value}))"
+    #     node_string = node_string[:-2] + "]"
+    #     return node_string
 
 class MCTSPlanner:
-    def __init__(self, env: MultiDroneUnc, c: float = 1, rollout_lookahead = 10):
+    def __init__(self, env: MultiDroneUnc, c: float = 1, rollout_lookahead = 20):
         self._env = env
         self.c = c
         self.rollout_lookahead = rollout_lookahead
@@ -92,8 +92,6 @@ class MCTSPlanner:
                     cur_node.parent.children[prev_a][0] += 1
                     cur_a = prev_a
                 cur_node = cur_node.parent
-        # print("\n")
-        # print(root)
         
         # Picking best action to perform
         best_a = None
@@ -103,7 +101,5 @@ class MCTSPlanner:
             if best_value == None or child.value > best_value:
                 best_a = a
                 best_value = child.value
-        # print("Best a = ", best_a)
-        # print("\n")
         
         return best_a
