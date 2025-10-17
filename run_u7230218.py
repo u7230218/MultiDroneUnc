@@ -2,7 +2,6 @@ import argparse
 from multi_drone import MultiDroneUnc
 
 from rtdp_planner import RTDPPlanner
-from mcts_planner import MCTSPlanner
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--config', type=str, required=True, help="Path to the yaml configuration file")
@@ -41,8 +40,7 @@ def run(env, planner, planning_time_per_step=1.0):
 env = MultiDroneUnc(args.config)
 
 # Instantiate the planner
-planner = RTDPPlanner(env)
-# planner = MCTSPlanner(env)
+planner = RTDPPlanner(env, action_sample_size=10)
 
 # Run the planning loop
 total_discounted_reward, history = run(env, planner, planning_time_per_step=1.0)
